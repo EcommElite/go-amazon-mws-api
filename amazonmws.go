@@ -120,7 +120,16 @@ func (api AmazonMWSAPI) GetMatchingProductForId(idType string, idList []string) 
 func (api AmazonMWSAPI) GetMyFeesEstimate(isFba bool, items []FeeEstimateRequest) (string, error) {
 	params := make(map[string]string)
 
-	fmt.Println(params);
+	for index, item := range items {
+		fmt.Println(index)
+		fmt.Println(item)
+		queryItems := item.toQuery(index, api.MarketplaceId)
 
-	return "", nil
+		for key, value := range queryItems {
+			params[key] = value
+		}
+	}
+
+	//fmt.Println(params);
+	return api.genSignAndFetch("GetMyFeesEstimate", "/Products/2011-10-01", params)
 }

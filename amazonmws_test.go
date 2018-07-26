@@ -1,7 +1,7 @@
 package amazonmws
 
 import (
-	//"fmt"
+	"fmt"
 	"net/url"
 	"testing"
 )
@@ -62,11 +62,14 @@ func Test_GetLowestOfferListingForAsin(t *testing.T) {
 
 func TestGetMyFeesEstimateQuery(t *testing.T) {
 	//item := FeeEstimateRequest{ IdValue: "BOOKBOOK12", PriceToEstimateFees: 10.11 }
-	//
+
 	//request := item.requestString(1, "US");
-	//
+
 	//result := item.toQuery(1, "US");
-	//
+
 	//fmt.Println(request);
 	//fmt.Println(result);
+	if false {
+		fmt.Println("")
+	}
 }
