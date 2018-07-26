@@ -50,12 +50,12 @@ func (f *FeeEstimateRequest) toQuery(index int, marketplaceId string) map[string
 	output := make(map[string]string)
 
 	f.setDefaults(marketplaceId)
-	output[f.requestString(index, "IdValue")] = f.IdValue
-	output[f.requestString(index, "PriceToEstimateFees.ListingPrice.CurrencyCode")] = f.Currency
-	output[f.requestString(index, "PriceToEstimateFees.ListingPrice.Amount")] = strconv.FormatFloat(f.PriceToEstimateFees, 'f', 2, 32)
-	output[f.requestString(index, "MarketplaceId")] = f.MarketplaceId
-	output[f.requestString(index, "IdType")] = f.IdType
-	output[f.requestString(index, "Identifier")] = f.Identifier
+	output[f.requestString(index + 1, "IdValue")] = f.IdValue
+	output[f.requestString(index + 1, "PriceToEstimateFees.ListingPrice.CurrencyCode")] = f.Currency
+	output[f.requestString(index + 1, "PriceToEstimateFees.ListingPrice.Amount")] = strconv.FormatFloat(f.PriceToEstimateFees, 'f', 2, 32)
+	output[f.requestString(index + 1, "MarketplaceId")] = f.MarketplaceId
+	output[f.requestString(index + 1, "IdType")] = f.IdType
+	output[f.requestString(index + 1, "Identifier")] = f.Identifier
 
 	var isFba string
 	if (f.IsAmazonFulfilled) {
@@ -64,7 +64,7 @@ func (f *FeeEstimateRequest) toQuery(index int, marketplaceId string) map[string
 		isFba = "0"
 	}
 
-	output[f.requestString(index, "IsAmazonFulfilled")] = isFba
+	output[f.requestString(index + 1, "IsAmazonFulfilled")] = isFba
 
 	fmt.Printf("%#v", output);
 
