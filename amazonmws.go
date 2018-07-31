@@ -66,8 +66,6 @@ func (f *FeeEstimateRequest) toQuery(index int, marketplaceId string) map[string
 
 	output[f.requestString(index + 1, "IsAmazonFulfilled")] = isFba
 
-	fmt.Printf("%#v", output);
-
 	return output
 }
 
@@ -121,8 +119,6 @@ func (api AmazonMWSAPI) GetMyFeesEstimate(items []FeeEstimateRequest) (string, e
 	params := make(map[string]string)
 
 	for index, item := range items {
-		fmt.Println(index)
-		fmt.Println(item)
 		queryItems := item.toQuery(index, api.MarketplaceId)
 
 		for key, value := range queryItems {
@@ -130,6 +126,5 @@ func (api AmazonMWSAPI) GetMyFeesEstimate(items []FeeEstimateRequest) (string, e
 		}
 	}
 
-	//fmt.Println(params);
 	return api.genSignAndFetch("GetMyFeesEstimate", "/Products/2011-10-01", params)
 }
