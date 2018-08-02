@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"testing"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSimpleSignAmazonUrl(t *testing.T) {
@@ -21,7 +22,7 @@ func TestSimpleSignAmazonUrl(t *testing.T) {
 
 	resultUrl, err := SignAmazonUrl(url, api)
 	if err != nil {
-		t.Error("Signing failure: %v", err)
+		t.Error("Signing failure:", err)
 	}
 
 	if signedUrl != resultUrl {
@@ -48,7 +49,7 @@ func Test_SignAmazonUrl_1(t *testing.T) {
 
 	resultUrl, err := SignAmazonUrl(url, api)
 	if err != nil {
-		t.Error("Signing failure: %v", err)
+		t.Error("Signing failure:", err)
 	}
 
 	if signedUrl != resultUrl {
@@ -72,4 +73,98 @@ func TestGetMyFeesEstimateQuery(t *testing.T) {
 	if false {
 		fmt.Println("")
 	}
+}
+
+func TestSign(t *testing.T) {
+	api := AmazonMWSAPI{}
+	api.AccessKey = "TEST"
+	api.SecretKey = "TEST"
+	api.SellerId = "TEST"
+	api.MarketplaceId = "ATVPDKIKX0DER"
+	api.Host = "mws.amazonservices.com"
+
+	link, err := url.Parse(api.Host)
+	link.Host = api.Host
+	link.Scheme = "https"
+	link.Path = "/Products/2011-10-01"
+	assert.Nil(t, err)
+
+	params := make(map[string]string)
+	params["Action"] = "GetMyFeesEstimate"
+	params["AWSAccessKeyId"] = api.AccessKey
+	params["SellerId"] = api.SellerId
+	params["SignatureVersion"] = "2"
+	params["SignatureMethod"] = "HmacSHA256"
+	params["Version"] = "2011-10-01"
+	params["FeesEstimateRequestList.FeesEstimateRequest.1.MarketplaceId"] = "ATVPDKIKX0DER"
+	params["FeesEstimateRequestList.FeesEstimateRequest.1.IdType"] = "ASIN"
+	params["FeesEstimateRequestList.FeesEstimateRequest.1.IdValue"] = "B06XPRCY44"
+	params["FeesEstimateRequestList.FeesEstimateRequest.1.IsAmazonFulfilled"] = "true"
+	params["FeesEstimateRequestList.FeesEstimateRequest.1.Identifier"] = "B06XPRCY44"
+	params["FeesEstimateRequestList.FeesEstimateRequest.1.PriceToEstimateFees.ListingPrice.Amount"] = "8.86"
+	params["FeesEstimateRequestList.FeesEstimateRequest.1.PriceToEstimateFees.ListingPrice.CurrencyCode"] = "USD"
+	params["FeesEstimateRequestList.FeesEstimateRequest.1.PriceToEstimateFees.Shipping.Amount"] = "0"
+	params["FeesEstimateRequestList.FeesEstimateRequest.1.PriceToEstimateFees.Shipping.CurrencyCode"] = "USD"
+	params["FeesEstimateRequestList.FeesEstimateRequest.1.PriceToEstimateFees.Points.PointsNumber"] = "0"
+	params["FeesEstimateRequestList.FeesEstimateRequest.1.PriceToEstimateFees.Points.PointsMonetaryValue.Amount"] = "0"
+	params["FeesEstimateRequestList.FeesEstimateRequest.1.PriceToEstimateFees.Points.PointsMonetaryValue.CurrencyCode"] = "USD"
+	params["Timestamp"] = "2018-07-31T19:52:07Z"
+
+	// 2. Do this
+	signature, err := sign("POST", link, params, api)
+
+	// 3.1 Expect no error
+	assert.Nil(t, err)
+
+	// 3.2 Expect signature to be correct
+	assert.Equal(t, "9D6Lv2KDXcsJ5aWvityyJhEav1EV0tgjpPHI7w7hTIc=", signature)
+}
+
+func TestSignFromRequest(t *testing.T) {
+	api := AmazonMWSAPI{}
+	api.AccessKey = "TEST"
+	api.SecretKey = "TEST"
+	api.SellerId = "TEST"
+	api.MarketplaceId = "ATVPDKIKX0DER"
+	api.Host = "mws.amazonservices.com"
+
+	link, err := url.Parse(api.Host)
+	link.Host = api.Host
+	link.Scheme = "https"
+	link.Path = "/Products/2011-10-01"
+	assert.Nil(t, err)
+
+	request := FeeEstimateRequest{
+		IdValue: "B06XPRCY44",
+		PriceToEstimateFees: 8.86,
+		Currency: "USD",
+		MarketplaceId: "ATVPDKIKX0DER",
+		IdType: "ASIN",
+		Identifier: "B06XPRCY44",
+		IsAmazonFulfilled: true,
+	}
+
+	params := make(map[string]string)
+	queryItems := request.toQuery(0, api.MarketplaceId)
+
+	for key, value := range queryItems {
+		params[key] = value
+	}
+
+	params["Action"] = "GetMyFeesEstimate"
+	params["AWSAccessKeyId"] = api.AccessKey
+	params["SellerId"] = api.SellerId
+	params["SignatureVersion"] = "2"
+	params["SignatureMethod"] = "HmacSHA256"
+	params["Version"] = "2011-10-01"
+	params["Timestamp"] = "2018-07-31T19:52:07Z"
+
+	// 2. Do this
+	signature, err := sign("POST", link, params, api)
+
+	// 3.1 Expect no error
+	assert.Nil(t, err)
+
+	// 3.2 Expect signature to be correct
+	assert.Equal(t, "9D6Lv2KDXcsJ5aWvityyJhEav1EV0tgjpPHI7w7hTIc=", signature)
 }

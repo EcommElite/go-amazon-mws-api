@@ -51,17 +51,22 @@ func (f *FeeEstimateRequest) toQuery(index int, marketplaceId string) map[string
 
 	f.setDefaults(marketplaceId)
 	output[f.requestString(index + 1, "IdValue")] = f.IdValue
-	output[f.requestString(index + 1, "PriceToEstimateFees.ListingPrice.CurrencyCode")] = f.Currency
 	output[f.requestString(index + 1, "PriceToEstimateFees.ListingPrice.Amount")] = strconv.FormatFloat(f.PriceToEstimateFees, 'f', 2, 32)
+	output[f.requestString(index + 1, "PriceToEstimateFees.ListingPrice.CurrencyCode")] = f.Currency
+	output[f.requestString(index + 1, "PriceToEstimateFees.Shipping.Amount")] = "0"
+	output[f.requestString(index + 1, "PriceToEstimateFees.Shipping.CurrencyCode")] = f.Currency
+	output[f.requestString(index + 1, "PriceToEstimateFees.Points.PointsNumber")] = "0"
+	output[f.requestString(index + 1, "PriceToEstimateFees.Points.PointsMonetaryValue.Amount")] = "0"
+	output[f.requestString(index + 1, "PriceToEstimateFees.Points.PointsMonetaryValue.CurrencyCode")] = f.Currency
 	output[f.requestString(index + 1, "MarketplaceId")] = f.MarketplaceId
 	output[f.requestString(index + 1, "IdType")] = f.IdType
 	output[f.requestString(index + 1, "Identifier")] = f.Identifier
 
 	var isFba string
 	if (f.IsAmazonFulfilled) {
-		isFba = "1"
+		isFba = "true"
 	} else {
-		isFba = "0"
+		isFba = "false"
 	}
 
 	output[f.requestString(index + 1, "IsAmazonFulfilled")] = isFba
@@ -126,5 +131,5 @@ func (api AmazonMWSAPI) GetMyFeesEstimate(items []FeeEstimateRequest) (string, e
 		}
 	}
 
-	return api.genSignAndFetch("GetMyFeesEstimate", "/Products/2011-10-01", params)
+	return api.genSignAndFetchViaPost("GetMyFeesEstimate", "/Products/2011-10-01", params)
 }
