@@ -75,11 +75,15 @@ func (f *FeeEstimateRequest) toQuery(index int, marketplaceId string) map[string
 }
 
 // ListMatchingProducts - returns a list of products and their attributes, based on a search query.
-func (api AmazonMWSAPI) ListMatchingProducts(query string) (string, error) {
+func (api AmazonMWSAPI) ListMatchingProducts(query, queryContextID string) (string, error) {
 	params := make(map[string]string)
 
 	params["MarketplaceId"] = string(api.MarketplaceId)
 	params["Query"] = query
+
+	if queryContextID != "" {
+		params["QueryContextId"] = queryContextID
+	}
 
 	return api.genSignAndFetch("ListMatchingProducts", "/Products/2011-10-01", params)
 }
