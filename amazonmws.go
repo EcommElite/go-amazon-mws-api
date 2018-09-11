@@ -2,19 +2,19 @@
 package amazonmws
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 	"strconv"
 )
 
 type FeeEstimateRequest struct {
-	IdValue string
+	IdValue             string
 	PriceToEstimateFees float64
-	Currency string
-	MarketplaceId string
-	IdType string
-	Identifier string
-	IsAmazonFulfilled bool
+	Currency            string
+	MarketplaceId       string
+	IdType              string
+	Identifier          string
+	IsAmazonFulfilled   bool
 }
 
 func (f *FeeEstimateRequest) requestString(index int, key string) string {
@@ -50,28 +50,42 @@ func (f *FeeEstimateRequest) toQuery(index int, marketplaceId string) map[string
 	output := make(map[string]string)
 
 	f.setDefaults(marketplaceId)
-	output[f.requestString(index + 1, "IdValue")] = f.IdValue
-	output[f.requestString(index + 1, "PriceToEstimateFees.ListingPrice.Amount")] = strconv.FormatFloat(f.PriceToEstimateFees, 'f', 2, 32)
-	output[f.requestString(index + 1, "PriceToEstimateFees.ListingPrice.CurrencyCode")] = f.Currency
-	output[f.requestString(index + 1, "PriceToEstimateFees.Shipping.Amount")] = "0"
-	output[f.requestString(index + 1, "PriceToEstimateFees.Shipping.CurrencyCode")] = f.Currency
-	output[f.requestString(index + 1, "PriceToEstimateFees.Points.PointsNumber")] = "0"
-	output[f.requestString(index + 1, "PriceToEstimateFees.Points.PointsMonetaryValue.Amount")] = "0"
-	output[f.requestString(index + 1, "PriceToEstimateFees.Points.PointsMonetaryValue.CurrencyCode")] = f.Currency
-	output[f.requestString(index + 1, "MarketplaceId")] = f.MarketplaceId
-	output[f.requestString(index + 1, "IdType")] = f.IdType
-	output[f.requestString(index + 1, "Identifier")] = f.Identifier
+	output[f.requestString(index+1, "IdValue")] = f.IdValue
+	output[f.requestString(index+1, "PriceToEstimateFees.ListingPrice.Amount")] = strconv.FormatFloat(f.PriceToEstimateFees, 'f', 2, 32)
+	output[f.requestString(index+1, "PriceToEstimateFees.ListingPrice.CurrencyCode")] = f.Currency
+	output[f.requestString(index+1, "PriceToEstimateFees.Shipping.Amount")] = "0"
+	output[f.requestString(index+1, "PriceToEstimateFees.Shipping.CurrencyCode")] = f.Currency
+	output[f.requestString(index+1, "PriceToEstimateFees.Points.PointsNumber")] = "0"
+	output[f.requestString(index+1, "PriceToEstimateFees.Points.PointsMonetaryValue.Amount")] = "0"
+	output[f.requestString(index+1, "PriceToEstimateFees.Points.PointsMonetaryValue.CurrencyCode")] = f.Currency
+	output[f.requestString(index+1, "MarketplaceId")] = f.MarketplaceId
+	output[f.requestString(index+1, "IdType")] = f.IdType
+	output[f.requestString(index+1, "Identifier")] = f.Identifier
 
 	var isFba string
-	if (f.IsAmazonFulfilled) {
+	if f.IsAmazonFulfilled {
 		isFba = "true"
 	} else {
 		isFba = "false"
 	}
 
-	output[f.requestString(index + 1, "IsAmazonFulfilled")] = isFba
+	output[f.requestString(index+1, "IsAmazonFulfilled")] = isFba
 
 	return output
+}
+
+// ListMatchingProducts - returns a list of products and their attributes, based on a search query.
+func (api AmazonMWSAPI) ListMatchingProducts(query, queryContextID string) (string, error) {
+	params := make(map[string]string)
+
+	params["MarketplaceId"] = string(api.MarketplaceId)
+	params["Query"] = query
+
+	if queryContextID != "" {
+		params["QueryContextId"] = queryContextID
+	}
+
+	return api.genSignAndFetch("ListMatchingProducts", "/Products/2011-10-01", params)
 }
 
 /*
