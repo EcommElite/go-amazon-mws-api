@@ -147,3 +147,11 @@ func (api AmazonMWSAPI) GetMyFeesEstimate(items []FeeEstimateRequest) (string, e
 
 	return api.genSignAndFetchViaPost("GetMyFeesEstimate", "/Products/2011-10-01", params)
 }
+
+func (api AmazonMWSAPI) GetReportRequestStatus(reportID string) (string, error) {
+	params := make(map[string]string)
+
+	params["ReportRequestIdList.Id.1"] = reportID
+
+	return api.genSignAndFetch("GetReportRequestList", "/Reports/2009-01-01", params)
+}

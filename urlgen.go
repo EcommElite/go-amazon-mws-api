@@ -1,17 +1,18 @@
 package amazonmws
 
 import (
-	"fmt"
-	"time"
-	"sort"
 	"bytes"
-	"net/url"
-	"strings"
-	"net/http"
-	"io/ioutil"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"regexp"
+	"sort"
+	"strings"
+	"time"
 	//"bitbucket.org/zombiezen/cardcpx/natsort"
 )
 
@@ -52,7 +53,7 @@ func (api AmazonMWSAPI) genSignAndFetch(Action string, ActionPath string, Parame
 }
 
 func (api AmazonMWSAPI) genSignAndFetchViaPost(Action string, ActionPath string, Parameters map[string]string) (string, error) {
-	if (api.AuthToken != "") {
+	if api.AuthToken != "" {
 		Parameters["MWSAuthToken"] = api.AuthToken
 	}
 
@@ -125,10 +126,20 @@ func GenerateAmazonUrl(api AmazonMWSAPI, Action string, ActionPath string, Param
 	result.Scheme = "https"
 	result.Path = ActionPath
 
+	var version string
+	re := regexp.MustCompile(`/\w+/(\d{4}-\d{2}-\d{2})`)
+	match := re.FindStringSubmatch(ActionPath)
+
+	if len(match) == 2 {
+		version = match[1]
+	} else {
+		version = "2011-10-01"
+	}
+
 	values := url.Values{}
 	values.Add("Action", Action)
 
-	if (api.AuthToken != "") {
+	if api.AuthToken != "" {
 		values.Add("MWSAuthToken", api.AuthToken)
 	}
 
@@ -136,7 +147,7 @@ func GenerateAmazonUrl(api AmazonMWSAPI, Action string, ActionPath string, Param
 	values.Add("SellerId", api.SellerId)
 	values.Add("SignatureVersion", "2")
 	values.Add("SignatureMethod", "HmacSHA256")
-	values.Add("Version", "2011-10-01")
+	values.Add("Version", version)
 
 	for k, v := range Parameters {
 		values.Set(k, v)
