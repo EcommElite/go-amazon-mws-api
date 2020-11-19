@@ -85,7 +85,7 @@ func (api AmazonMWSAPI) ListMatchingProducts(query, queryContextID string) (stri
 		params["QueryContextId"] = queryContextID
 	}
 
-	return api.genSignAndFetch("ListMatchingProducts", "/Products/2011-10-01", params)
+	return api.fastSignAndFetchViaPost("ListMatchingProducts", "/Products/2011-10-01", params, nil)
 }
 
 /*
@@ -101,7 +101,7 @@ func (api AmazonMWSAPI) GetLowestOfferListingsForASIN(items []string) (string, e
 
 	params["MarketplaceId"] = string(api.MarketplaceId)
 
-	return api.genSignAndFetch("GetLowestOfferListingsForASIN", "/Products/2011-10-01", params)
+	return api.fastSignAndFetchViaPost("GetLowestOfferListingsForASIN", "/Products/2011-10-01", params, nil)
 }
 
 /*
@@ -117,7 +117,7 @@ func (api AmazonMWSAPI) GetCompetitivePricingForASIN(items []string) (string, er
 
 	params["MarketplaceId"] = string(api.MarketplaceId)
 
-	return api.genSignAndFetch("GetCompetitivePricingForASIN", "/Products/2011-10-01", params)
+	return api.fastSignAndFetchViaPost("GetCompetitivePricingForASIN", "/Products/2011-10-01", params, nil)
 }
 
 func (api AmazonMWSAPI) GetMatchingProductForId(idType string, idList []string) (string, error) {
@@ -131,7 +131,7 @@ func (api AmazonMWSAPI) GetMatchingProductForId(idType string, idList []string) 
 	params["IdType"] = idType
 	params["MarketplaceId"] = string(api.MarketplaceId)
 
-	return api.genSignAndFetch("GetMatchingProductForId", "/Products/2011-10-01", params)
+	return api.fastSignAndFetchViaPost("GetMatchingProductForId", "/Products/2011-10-01", params, nil)
 }
 
 func (api AmazonMWSAPI) GetMyFeesEstimate(items []FeeEstimateRequest) (string, error) {
@@ -145,7 +145,7 @@ func (api AmazonMWSAPI) GetMyFeesEstimate(items []FeeEstimateRequest) (string, e
 		}
 	}
 
-	return api.genSignAndFetchViaPost("GetMyFeesEstimate", "/Products/2011-10-01", params)
+	return api.fastSignAndFetchViaPost("GetMyFeesEstimate", "/Products/2011-10-01", params, nil)
 }
 
 func (api AmazonMWSAPI) GetReportRequestStatus(reportID string) (string, error) {
@@ -153,5 +153,13 @@ func (api AmazonMWSAPI) GetReportRequestStatus(reportID string) (string, error) 
 
 	params["ReportRequestIdList.Id.1"] = reportID
 
-	return api.genSignAndFetch("GetReportRequestList", "/Reports/2009-01-01", params)
+	return api.fastSignAndFetchViaPost("GetReportRequestList", "/Reports/2009-01-01", params, nil)
+}
+
+func (api AmazonMWSAPI) SubmitFeed(content []byte, feedType string) (string, error) {
+	params := make(map[string]string)
+
+	params["FeedType"] = feedType
+
+	return api.fastSignAndFetchViaPost("SubmitFeed", "/Feeds/2009-01-01", params, content)
 }

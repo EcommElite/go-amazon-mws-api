@@ -3,18 +3,30 @@ package amazonmws
 import (
 	"bytes"
 	"crypto/hmac"
+	"crypto/md5"
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"github.com/valyala/fasthttp"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 	//"bitbucket.org/zombiezen/cardcpx/natsort"
 )
+
+var versions map[string]string
+
+func init() {
+	versions = make(map[string]string)
+	versions["/Feeds/2009-01-01"] = "2009-01-01"
+	versions["/Products/2011-10-01"] = "2011-10-01"
+	versions["/Reports/2009-01-01"] = "2009-01-01"
+}
 
 type AmazonMWSAPI struct {
 	AccessKey     string
@@ -65,7 +77,7 @@ func (api AmazonMWSAPI) genSignAndFetchViaPost(Action string, ActionPath string,
 	Parameters["Version"] = "2011-10-01"
 	Parameters["Timestamp"] = time.Now().UTC().Format(time.RFC3339)
 
-	genUrl, err := GenerateAmazonUrlPost(api, Action, ActionPath, Parameters)
+	genUrl, err := GenerateAmazonUrlPost(api, ActionPath)
 	if err != nil {
 		return "", err
 	}
@@ -103,7 +115,71 @@ func (api AmazonMWSAPI) genSignAndFetchViaPost(Action string, ActionPath string,
 	return string(body), nil
 }
 
-func GenerateAmazonUrlPost(api AmazonMWSAPI, Action string, ActionPath string, Parameters map[string]string) (finalUrl *url.URL, err error) {
+var strPost = []byte("POST")
+func (api AmazonMWSAPI) fastSignAndFetchViaPost(Action string, ActionPath string, Parameters map[string]string, body []byte) (string, error) {
+	genUrl, err := GenerateAmazonUrlPost(api, ActionPath)
+	if err != nil {
+		return "", err
+	}
+
+	req := fasthttp.AcquireRequest()
+	resp := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseRequest(req) // <- do not forget to release
+	defer fasthttp.ReleaseResponse(resp) // <- do not forget to release
+
+	if api.AuthToken != "" {
+		Parameters["MWSAuthToken"] = api.AuthToken
+	}
+
+	Parameters["Action"] = Action
+	Parameters["AWSAccessKeyId"] = api.AccessKey
+	Parameters["SellerId"] = api.SellerId
+	Parameters["SignatureVersion"] = "2"
+	Parameters["SignatureMethod"] = "HmacSHA256"
+	Parameters["Version"] = versions[ActionPath]
+	fmt.Println("Version for", ActionPath, "is", versions[ActionPath], "from", versions)
+	Parameters["Timestamp"] = time.Now().UTC().Format(time.RFC3339)
+
+	signature, err := sign("POST", genUrl, Parameters, api)
+	if err != nil {
+		return "", err
+	}
+	Parameters["Signature"] = signature
+	req.Header.SetMethodBytes(strPost)
+	req.SetRequestURI(genUrl.String())
+
+	v := url.Values{}
+	for index, value := range Parameters {
+		v.Set(index, value)
+	}
+	s := v.Encode()
+
+	if body != nil {
+		req.SetRequestURI(string(req.RequestURI()) + "?" + s)
+
+		hash := md5.Sum(body)
+		MD5 := base64.StdEncoding.EncodeToString([]byte(hash[:]))
+
+		req.Header.DisableNormalizing()
+		req.Header.Set("Content-MD5", MD5)
+		req.Header.Set("Content-Type", "text/xml; charset=iso-8859-1")
+		req.SetBody(body)
+	} else {
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Set("ContentLength", strconv.Itoa(len([]byte(s))))
+		req.SetBodyString(s)
+	}
+
+	err = fasthttp.Do(req, resp)
+	if err != nil {
+		return "", err
+	}
+
+	bodyBytes := resp.Body()
+	return string(bodyBytes), nil
+}
+
+func GenerateAmazonUrlPost(api AmazonMWSAPI, ActionPath string) (finalUrl *url.URL, err error) {
 	result, err := url.Parse(api.Host)
 	if err != nil {
 		return nil, err
