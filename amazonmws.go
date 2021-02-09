@@ -75,7 +75,7 @@ func (f *FeeEstimateRequest) toQuery(index int, marketplaceId string) map[string
 }
 
 // ListMatchingProducts - returns a list of products and their attributes, based on a search query.
-func (api AmazonMWSAPI) ListMatchingProducts(query, queryContextID string) (string, error) {
+func (api AmazonMWSAPI) ListMatchingProducts(query, queryContextID string) (string, Quota, error) {
 	params := make(map[string]string)
 
 	params["MarketplaceId"] = string(api.MarketplaceId)
@@ -91,7 +91,7 @@ func (api AmazonMWSAPI) ListMatchingProducts(query, queryContextID string) (stri
 /*
 GetLowestOfferListingsForASIN takes a list of ASINs and returns the result.
 */
-func (api AmazonMWSAPI) GetLowestOfferListingsForASIN(items []string) (string, error) {
+func (api AmazonMWSAPI) GetLowestOfferListingsForASIN(items []string) (string, Quota, error) {
 	params := make(map[string]string)
 
 	for k, v := range items {
@@ -107,7 +107,7 @@ func (api AmazonMWSAPI) GetLowestOfferListingsForASIN(items []string) (string, e
 /*
 GetCompetitivePricingForAsin takes a list of ASINs and returns the result.
 */
-func (api AmazonMWSAPI) GetCompetitivePricingForASIN(items []string) (string, error) {
+func (api AmazonMWSAPI) GetCompetitivePricingForASIN(items []string) (string, Quota, error) {
 	params := make(map[string]string)
 
 	for k, v := range items {
@@ -120,7 +120,7 @@ func (api AmazonMWSAPI) GetCompetitivePricingForASIN(items []string) (string, er
 	return api.fastSignAndFetchViaPost("GetCompetitivePricingForASIN", "/Products/2011-10-01", params, nil)
 }
 
-func (api AmazonMWSAPI) GetMatchingProductForId(idType string, idList []string) (string, error) {
+func (api AmazonMWSAPI) GetMatchingProductForId(idType string, idList []string) (string, Quota, error) {
 	params := make(map[string]string)
 
 	for k, v := range idList {
@@ -134,7 +134,7 @@ func (api AmazonMWSAPI) GetMatchingProductForId(idType string, idList []string) 
 	return api.fastSignAndFetchViaPost("GetMatchingProductForId", "/Products/2011-10-01", params, nil)
 }
 
-func (api AmazonMWSAPI) GetMyFeesEstimate(items []FeeEstimateRequest) (string, error) {
+func (api AmazonMWSAPI) GetMyFeesEstimate(items []FeeEstimateRequest) (string, Quota, error) {
 	params := make(map[string]string)
 
 	for index, item := range items {
@@ -148,7 +148,7 @@ func (api AmazonMWSAPI) GetMyFeesEstimate(items []FeeEstimateRequest) (string, e
 	return api.fastSignAndFetchViaPost("GetMyFeesEstimate", "/Products/2011-10-01", params, nil)
 }
 
-func (api AmazonMWSAPI) GetReportRequestStatus(reportID string) (string, error) {
+func (api AmazonMWSAPI) GetReportRequestStatus(reportID string) (string, Quota, error) {
 	params := make(map[string]string)
 
 	params["ReportRequestIdList.Id.1"] = reportID
@@ -156,10 +156,14 @@ func (api AmazonMWSAPI) GetReportRequestStatus(reportID string) (string, error) 
 	return api.fastSignAndFetchViaPost("GetReportRequestList", "/Reports/2009-01-01", params, nil)
 }
 
-func (api AmazonMWSAPI) SubmitFeed(content []byte, feedType string) (string, error) {
+func (api AmazonMWSAPI) SubmitFeed(content []byte, feedType string) (string, Quota, error) {
 	params := make(map[string]string)
 
 	params["FeedType"] = feedType
 
 	return api.fastSignAndFetchViaPost("SubmitFeed", "/Feeds/2009-01-01", params, content)
+}
+
+func (api AmazonMWSAPI) ListMarketplaceParticipations(content []byte, feedType string) (string, Quota, error) {
+	return api.fastSignAndFetchViaPost("ListMarketplaceParticipations", "/Sellers/2011-07-01", nil, nil)
 }

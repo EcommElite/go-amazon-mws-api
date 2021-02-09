@@ -34,11 +34,25 @@ type AmazonMWSAPI struct {
 	SellerId      string
 }
 
+type Quota struct {
+	MwsQuotaMax float64
+	MwsQuotaRemaining float64
+	MwsQuotaResetsOn time.Time
+}
+
+func (q *Quota) IsExpired() bool {
+	return q.MwsQuotaRemaining <= 0 && q.MwsQuotaMax > 0
+}
+
+func (q *Quota) RetryIn() time.Duration {
+	return time.Until(q.MwsQuotaResetsOn) + 1 * time.Second
+}
+
 var strPost = []byte("POST")
-func (api AmazonMWSAPI) fastSignAndFetchViaPost(Action string, ActionPath string, Parameters map[string]string, body []byte) (string, error) {
+func (api AmazonMWSAPI) fastSignAndFetchViaPost(Action string, ActionPath string, Parameters map[string]string, body []byte) (string, Quota, error) {
 	genUrl, err := GenerateAmazonUrlPost(api, ActionPath)
 	if err != nil {
-		return "", err
+		return "", Quota{}, err
 	}
 
 	req := fasthttp.AcquireRequest()
@@ -56,12 +70,11 @@ func (api AmazonMWSAPI) fastSignAndFetchViaPost(Action string, ActionPath string
 	Parameters["SignatureVersion"] = "2"
 	Parameters["SignatureMethod"] = "HmacSHA256"
 	Parameters["Version"] = versions[ActionPath]
-	fmt.Println("Version for", ActionPath, "is", versions[ActionPath], "from", versions)
 	Parameters["Timestamp"] = time.Now().UTC().Format(time.RFC3339)
 
 	signature, err := sign("POST", genUrl, Parameters, api)
 	if err != nil {
-		return "", err
+		return "", Quota{}, err
 	}
 	Parameters["Signature"] = signature
 	req.Header.SetMethodBytes(strPost)
@@ -91,11 +104,22 @@ func (api AmazonMWSAPI) fastSignAndFetchViaPost(Action string, ActionPath string
 
 	err = fasthttp.Do(req, resp)
 	if err != nil {
-		return "", err
+		return "", Quota{}, err
 	}
 
-	bodyBytes := resp.Body()
-	return string(bodyBytes), nil
+	//resp.Header.Peek("x-mws-quota-max")
+	max, _ := strconv.ParseFloat(string(resp.Header.Peek("x-mws-quota-max")), 10)
+	remaining, _ := strconv.ParseFloat(string(resp.Header.Peek("x-mws-quota-remaining")), 10)
+	layout := "2006-01-02T15:04:05.000Z"
+	t, _ := time.Parse(layout, string(resp.Header.Peek("x-mws-quota-resetson")))
+
+	quota := Quota{
+		MwsQuotaMax: max,
+		MwsQuotaRemaining: remaining,
+		MwsQuotaResetsOn: t,
+	}
+
+	return string(resp.Body()), quota, nil
 }
 
 func GenerateAmazonUrlPost(api AmazonMWSAPI, ActionPath string) (finalUrl *url.URL, err error) {
