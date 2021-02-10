@@ -164,6 +164,7 @@ func (api AmazonMWSAPI) SubmitFeed(content []byte, feedType string) (string, Quo
 	return api.fastSignAndFetchViaPost("SubmitFeed", "/Feeds/2009-01-01", params, content)
 }
 
-func (api AmazonMWSAPI) ListMarketplaceParticipations(content []byte, feedType string) (string, Quota, error) {
-	return api.fastSignAndFetchViaPost("ListMarketplaceParticipations", "/Sellers/2011-07-01", nil, nil)
+func (api AmazonMWSAPI) ListMarketplaceParticipations() (string, Quota, error) {
+	params := make(map[string]string)
+	return api.fastSignAndFetchViaPost("ListMarketplaceParticipations", "/Sellers/2011-07-01", params, nil)
 }

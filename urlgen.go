@@ -23,6 +23,7 @@ func init() {
 	versions["/Feeds/2009-01-01"] = "2009-01-01"
 	versions["/Products/2011-10-01"] = "2011-10-01"
 	versions["/Reports/2009-01-01"] = "2009-01-01"
+	versions["/Sellers/2011-07-01"] = "2011-07-01"
 }
 
 type AmazonMWSAPI struct {
@@ -64,12 +65,16 @@ func (api AmazonMWSAPI) fastSignAndFetchViaPost(Action string, ActionPath string
 		Parameters["MWSAuthToken"] = api.AuthToken
 	}
 
+	var exists bool
 	Parameters["Action"] = Action
 	Parameters["AWSAccessKeyId"] = api.AccessKey
 	Parameters["SellerId"] = api.SellerId
 	Parameters["SignatureVersion"] = "2"
 	Parameters["SignatureMethod"] = "HmacSHA256"
-	Parameters["Version"] = versions[ActionPath]
+	Parameters["Version"], exists = versions[ActionPath]
+	if ! exists {
+		fmt.Printf("Could not load version for %s\n", ActionPath)
+	}
 	Parameters["Timestamp"] = time.Now().UTC().Format(time.RFC3339)
 
 	signature, err := sign("POST", genUrl, Parameters, api)
@@ -128,7 +133,6 @@ func GenerateAmazonUrlPost(api AmazonMWSAPI, ActionPath string) (finalUrl *url.U
 		return nil, err
 	}
 
-	result.Host = api.Host
 	result.Scheme = "https"
 	result.Path = ActionPath
 
