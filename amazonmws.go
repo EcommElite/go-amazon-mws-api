@@ -1,5 +1,5 @@
 // amazonmws provides methods for interacting with the Amazon Marketplace Services API.
-package amazonmws
+	package amazonmws
 
 import (
 	"bytes"
@@ -167,4 +167,42 @@ func (api AmazonMWSAPI) SubmitFeed(content []byte, feedType string) (string, Quo
 func (api AmazonMWSAPI) ListMarketplaceParticipations() (string, Quota, error) {
 	params := make(map[string]string)
 	return api.fastSignAndFetchViaPost("ListMarketplaceParticipations", "/Sellers/2011-07-01", params, nil)
+}
+
+type RequestReportRequest struct {
+	ReportType string
+	StartDate *string
+	EndDate *string
+	ReportOptions *string
+	MarketplaceIdList []string
+}
+
+func (api AmazonMWSAPI) RequestReport(req RequestReportRequest) (string, Quota, error) {
+	params := make(map[string]string)
+
+	params["ReportType"] = req.ReportType
+	if req.StartDate != nil {
+	params["StartDate"] = *req.StartDate
+	}
+	if req.EndDate != nil {
+		params["EndDate"] = *req.EndDate
+	}
+	if req.ReportOptions != nil {
+		params["ReportOptions"] = *req.ReportOptions
+	}
+	if req.MarketplaceIdList != nil {
+		for i, v := range req.MarketplaceIdList {
+			params["MarketplaceIdList.Id." + strconv.Itoa(i+1)] = v
+		}
+	}
+
+	return api.fastSignAndFetchViaPost("RequestReport", "/Reports/2009-01-01", params, nil)
+}
+
+func (api AmazonMWSAPI) GetReportRequestList() {
+
+}
+
+func (api AmazonMWSAPI) GetReport() {
+
 }

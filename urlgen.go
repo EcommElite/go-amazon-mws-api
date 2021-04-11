@@ -153,7 +153,11 @@ func SetTimestamp(origUrl *url.URL) (err error) {
 func sign(method string, origUrl *url.URL, params map[string]string, api AmazonMWSAPI) (string, error) {
 	paramMap := make(map[string]string)
 	for key, value := range params {
-		paramMap[key] = value
+		if key == "ReportOptions" {
+			paramMap[key] = url.QueryEscape(value)
+		} else {
+			paramMap[key] = value
+		}
 	}
 	paramMap["Timestamp"] = url.QueryEscape(paramMap["Timestamp"])
 
@@ -178,7 +182,10 @@ func sign(method string, origUrl *url.URL, params map[string]string, api AmazonM
 
 	stringParams := strings.Join(sortedParams, "&")
 
+	//toSign := fmt.Sprintf("%s\n%s\n%s\n%s", method, origUrl.Host, "/", stringParams)
 	toSign := fmt.Sprintf("%s\n%s\n%s\n%s", method, origUrl.Host, origUrl.Path, stringParams)
+
+	fmt.Println(toSign)
 
 	hasher := hmac.New(sha256.New, []byte(api.SecretKey))
 	_, err := hasher.Write([]byte(toSign))
