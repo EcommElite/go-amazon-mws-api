@@ -36,9 +36,9 @@ type AmazonMWSAPI struct {
 }
 
 type Quota struct {
-	MwsQuotaMax float64
+	MwsQuotaMax       float64
 	MwsQuotaRemaining float64
-	MwsQuotaResetsOn time.Time
+	MwsQuotaResetsOn  time.Time
 }
 
 func (q *Quota) IsExpired() bool {
@@ -46,10 +46,11 @@ func (q *Quota) IsExpired() bool {
 }
 
 func (q *Quota) RetryIn() time.Duration {
-	return time.Until(q.MwsQuotaResetsOn) + 1 * time.Second
+	return time.Until(q.MwsQuotaResetsOn) + 1*time.Second
 }
 
 var strPost = []byte("POST")
+
 func (api AmazonMWSAPI) fastSignAndFetchViaPost(Action string, ActionPath string, Parameters map[string]string, body []byte) (string, Quota, error) {
 	genUrl, err := GenerateAmazonUrlPost(api, ActionPath)
 	if err != nil {
@@ -58,7 +59,7 @@ func (api AmazonMWSAPI) fastSignAndFetchViaPost(Action string, ActionPath string
 
 	req := fasthttp.AcquireRequest()
 	resp := fasthttp.AcquireResponse()
-	defer fasthttp.ReleaseRequest(req) // <- do not forget to release
+	defer fasthttp.ReleaseRequest(req)   // <- do not forget to release
 	defer fasthttp.ReleaseResponse(resp) // <- do not forget to release
 
 	if api.AuthToken != "" {
@@ -72,7 +73,7 @@ func (api AmazonMWSAPI) fastSignAndFetchViaPost(Action string, ActionPath string
 	Parameters["SignatureVersion"] = "2"
 	Parameters["SignatureMethod"] = "HmacSHA256"
 	Parameters["Version"], exists = versions[ActionPath]
-	if ! exists {
+	if !exists {
 		fmt.Printf("Could not load version for %s\n", ActionPath)
 	}
 	Parameters["Timestamp"] = time.Now().UTC().Format(time.RFC3339)
@@ -119,9 +120,9 @@ func (api AmazonMWSAPI) fastSignAndFetchViaPost(Action string, ActionPath string
 	t, _ := time.Parse(layout, string(resp.Header.Peek("x-mws-quota-resetson")))
 
 	quota := Quota{
-		MwsQuotaMax: max,
+		MwsQuotaMax:       max,
 		MwsQuotaRemaining: remaining,
-		MwsQuotaResetsOn: t,
+		MwsQuotaResetsOn:  t,
 	}
 
 	return string(resp.Body()), quota, nil
@@ -153,7 +154,11 @@ func SetTimestamp(origUrl *url.URL) (err error) {
 func sign(method string, origUrl *url.URL, params map[string]string, api AmazonMWSAPI) (string, error) {
 	paramMap := make(map[string]string)
 	for key, value := range params {
-		paramMap[key] = value
+		if key == "ReportOptions" {
+			paramMap[key] = url.QueryEscape(value)
+		} else {
+			paramMap[key] = value
+		}
 	}
 	paramMap["Timestamp"] = url.QueryEscape(paramMap["Timestamp"])
 
@@ -178,7 +183,10 @@ func sign(method string, origUrl *url.URL, params map[string]string, api AmazonM
 
 	stringParams := strings.Join(sortedParams, "&")
 
+	//toSign := fmt.Sprintf("%s\n%s\n%s\n%s", method, origUrl.Host, "/", stringParams)
 	toSign := fmt.Sprintf("%s\n%s\n%s\n%s", method, origUrl.Host, origUrl.Path, stringParams)
+
+	fmt.Println(toSign)
 
 	hasher := hmac.New(sha256.New, []byte(api.SecretKey))
 	_, err := hasher.Write([]byte(toSign))
