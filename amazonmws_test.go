@@ -2,9 +2,9 @@ package amazonmws
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"net/url"
 	"testing"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestSimpleSignAmazonUrl(t *testing.T) {
@@ -135,13 +135,13 @@ func TestSignFromRequest(t *testing.T) {
 	assert.Nil(t, err)
 
 	request := FeeEstimateRequest{
-		IdValue: "B06XPRCY44",
+		IdValue:             "B06XPRCY44",
 		PriceToEstimateFees: 8.86,
-		Currency: "USD",
-		MarketplaceId: "ATVPDKIKX0DER",
-		IdType: "ASIN",
-		Identifier: "B06XPRCY44",
-		IsAmazonFulfilled: true,
+		Currency:            "USD",
+		MarketplaceId:       "ATVPDKIKX0DER",
+		IdType:              "ASIN",
+		Identifier:          "B06XPRCY44",
+		IsAmazonFulfilled:   true,
 	}
 
 	params := make(map[string]string)

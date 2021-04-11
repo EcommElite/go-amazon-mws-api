@@ -1,5 +1,5 @@
 // amazonmws provides methods for interacting with the Amazon Marketplace Services API.
-	package amazonmws
+package amazonmws
 
 import (
 	"bytes"
@@ -170,10 +170,10 @@ func (api AmazonMWSAPI) ListMarketplaceParticipations() (string, Quota, error) {
 }
 
 type RequestReportRequest struct {
-	ReportType string
-	StartDate *string
-	EndDate *string
-	ReportOptions *string
+	ReportType        string
+	StartDate         *string
+	EndDate           *string
+	ReportOptions     *string
 	MarketplaceIdList []string
 }
 
@@ -182,7 +182,7 @@ func (api AmazonMWSAPI) RequestReport(req RequestReportRequest) (string, Quota, 
 
 	params["ReportType"] = req.ReportType
 	if req.StartDate != nil {
-	params["StartDate"] = *req.StartDate
+		params["StartDate"] = *req.StartDate
 	}
 	if req.EndDate != nil {
 		params["EndDate"] = *req.EndDate
@@ -192,17 +192,56 @@ func (api AmazonMWSAPI) RequestReport(req RequestReportRequest) (string, Quota, 
 	}
 	if req.MarketplaceIdList != nil {
 		for i, v := range req.MarketplaceIdList {
-			params["MarketplaceIdList.Id." + strconv.Itoa(i+1)] = v
+			params["MarketplaceIdList.Id."+strconv.Itoa(i+1)] = v
 		}
 	}
 
 	return api.fastSignAndFetchViaPost("RequestReport", "/Reports/2009-01-01", params, nil)
 }
 
-func (api AmazonMWSAPI) GetReportRequestList() {
-
+type GetReportRequestListRequest struct {
+	ReportRequestIdList        []string
+	ReportTypeList             []string
+	ReportProcessingStatusList []string
+	MaxCount                   *int
+	RequestedFromDate          *string
+	RequestedToDate            *string
 }
 
-func (api AmazonMWSAPI) GetReport() {
+func (api AmazonMWSAPI) GetReportRequestList(req GetReportRequestListRequest) (string, Quota, error) {
+	params := make(map[string]string)
 
+	if req.ReportRequestIdList != nil {
+		for i, v := range req.ReportRequestIdList {
+			params["ReportRequestIdList.Id."+strconv.Itoa(i+1)] = v
+		}
+	}
+	if req.ReportTypeList != nil {
+		for i, v := range req.ReportTypeList {
+			params["ReportTypeList.Type."+strconv.Itoa(i+1)] = v
+		}
+	}
+	if req.ReportProcessingStatusList != nil {
+		for i, v := range req.ReportProcessingStatusList {
+			params["ReportProcessingStatusList.Status."+strconv.Itoa(i+1)] = v
+		}
+	}
+	if req.MaxCount != nil {
+		params["MaxCount"] = strconv.Itoa(*req.MaxCount)
+	}
+	if req.RequestedFromDate != nil {
+		params["RequestedFromDate"] = *req.RequestedFromDate
+	}
+	if req.RequestedToDate != nil {
+		params["RequestedToDate"] = *req.RequestedToDate
+	}
+
+	return api.fastSignAndFetchViaPost("GetReportRequestList", "/Reports/2009-01-01", params, nil)
+}
+
+func (api AmazonMWSAPI) GetReport(reportId string) (string, Quota, error) {
+	params := make(map[string]string)
+	params["ReportId"] = reportId
+
+	return api.fastSignAndFetchViaPost("GetReport", "/Reports/2009-01-01", params, nil)
 }
