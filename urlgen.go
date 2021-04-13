@@ -186,8 +186,6 @@ func sign(method string, origUrl *url.URL, params map[string]string, api AmazonM
 	//toSign := fmt.Sprintf("%s\n%s\n%s\n%s", method, origUrl.Host, "/", stringParams)
 	toSign := fmt.Sprintf("%s\n%s\n%s\n%s", method, origUrl.Host, origUrl.Path, stringParams)
 
-	fmt.Println(toSign)
-
 	hasher := hmac.New(sha256.New, []byte(api.SecretKey))
 	_, err := hasher.Write([]byte(toSign))
 	if err != nil {
